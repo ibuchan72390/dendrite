@@ -1,0 +1,8 @@
+# docker-compose.dev.yml — use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  api:
+    volumes:
+      - ./dendrite:/app/dendrite  # live Python source (no rebuild needed for Python changes)
+      - dendrite-data:/data
+    environment:
+      RUST_LOG: "debug,dendrite_api=trace"

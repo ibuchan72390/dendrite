@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - dendrite-data:/data
+    environment:
+      DENDRITE_DB: /data/dendrite.db
+      PORT: "8080"
+      RUST_LOG: "info"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  dendrite-data:
+    driver: local
