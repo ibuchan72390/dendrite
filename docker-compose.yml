@@ -4,15 +4,15 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8181}:${API_PORT:-8181}"
     volumes:
       - dendrite-data:/data
     environment:
       DENDRITE_DB: /data/dendrite.db
-      PORT: "8080"
+      PORT: "${API_PORT:-8181}"
       RUST_LOG: "info"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${API_PORT:-8181}/health"]
       interval: 10s
       timeout: 5s
       retries: 3

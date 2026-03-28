@@ -28,9 +28,9 @@ COPY --from=rust-builder /build/target/release/dendrite-api /usr/local/bin/dendr
 # Data directory for SQLite persistence
 RUN mkdir -p /data
 
-EXPOSE 8080
+EXPOSE 8181
 
 ENV DENDRITE_DB=/data/dendrite.db
-ENV PORT=8080
+ENV PORT=8181
 
 CMD ["dendrite-api"]

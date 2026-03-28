@@ -27,3 +27,33 @@ dendrite show <id>
 ```bash
 pytest -v
 ```
+
+## Docker / API
+
+The Rust HTTP API defaults to port **8181** (avoids conflict with Gas Town dashboard on 8080).
+
+```bash
+# Start the API (default port 8181)
+docker compose up
+
+# Use a custom port
+API_PORT=9090 docker compose up
+
+# Check health
+curl http://localhost:8181/health
+```
+
+**Port forwarding in container environments:** When running inside a Docker
+network or VM, bind to the host explicitly:
+
+```bash
+# Map container port to host (already done by docker-compose)
+# Host: http://localhost:8181  →  Container: 0.0.0.0:8181
+
+# Override host-side port only (container still listens on 8181 internally)
+API_PORT=9090 docker compose up   # access via localhost:9090
+```
+
+The `PORT` environment variable controls which port the API listens on inside
+the container. `API_PORT` in docker-compose sets both the host-side mapping and
+the container's `PORT` together, keeping them in sync.
