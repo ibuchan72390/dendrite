@@ -32,6 +32,8 @@ pytest -v
 
 The Rust HTTP API defaults to port **8181** (avoids conflict with Gas Town dashboard on 8080).
 
+### Starting the API
+
 ```bash
 # Start the API (default port 8181)
 docker compose up
@@ -57,3 +59,108 @@ API_PORT=9090 docker compose up   # access via localhost:9090
 The `PORT` environment variable controls which port the API listens on inside
 the container. `API_PORT` in docker-compose sets both the host-side mapping and
 the container's `PORT` together, keeping them in sync.
+
+### API Endpoints
+
+All endpoints return JSON.
+
+#### `GET /health`
+
+Returns `{"status": "ok"}` when the service is up.
+
+```bash
+curl http://localhost:8181/health
+```
+
+#### `POST /neurons`
+
+Add a new neuron (knowledge fragment).
+
+```bash
+curl -X POST http://localhost:8181/neurons \
+  -H "Content-Type: application/json" \
+  -d '{"content": "The mitochondria is the powerhouse of the cell"}'
+
+# With an optional title
+curl -X POST http://localhost:8181/neurons \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Cells produce ATP through oxidative phosphorylation", "title": "ATP Production"}'
+```
+
+#### `GET /neurons`
+
+List all neurons.
+
+```bash
+curl http://localhost:8181/neurons
+```
+
+#### `GET /neurons/:id`
+
+Get a specific neuron by ID.
+
+```bash
+curl http://localhost:8181/neurons/42
+```
+
+#### `GET /search?q=...&top_k=N`
+
+Semantic search across neurons (wraps `dendrite ask`).
+
+| Query param | Required | Description |
+|-------------|----------|-------------|
+| `q`         | yes      | Search query |
+| `top_k`     | no       | Number of results to return (default: CLI default) |
+
+```bash
+curl "http://localhost:8181/search?q=how+does+the+brain+get+energy"
+
+# Limit results
+curl "http://localhost:8181/search?q=energy&top_k=5"
+```
+
+#### `GET /explore/:concept`
+
+Activate a concept and spread through synaptic connections (wraps `dendrite explore`).
+
+```bash
+curl http://localhost:8181/explore/energy
+```
+
+#### `GET /graph`
+
+Return the full neuron graph (nodes and weighted edges).
+
+```bash
+curl http://localhost:8181/graph
+```
+
+#### `GET /stats`
+
+Return aggregate statistics about the knowledge base.
+
+```bash
+curl http://localhost:8181/stats
+```
+
+#### `POST /consolidate`
+
+Trigger consolidation: strengthens frequently traversed paths, decays unused links.
+
+```bash
+curl -X POST http://localhost:8181/consolidate
+```
+
+### Dev Overlay
+
+The dev overlay mounts live Python source into the container so Python changes
+take effect without rebuilding the image. Only the Rust binary needs a rebuild
+when `api/src/` changes.
+
+```bash
+# Start with live Python reload (no rebuild on Python edits)
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+# Verbose Rust tracing enabled automatically in dev mode
+# RUST_LOG=debug,dendrite_api=trace
+```
