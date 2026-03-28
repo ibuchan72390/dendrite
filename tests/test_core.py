@@ -28,16 +28,18 @@ class TestAddNeuron:
         )
 
     def test_add_creates_synapses(self, dendrite):
-        """Adding related notes should create connections."""
+        """Adding related notes and reindexing should create connections."""
         dendrite.add("The mitochondria produces ATP energy in cells")
         dendrite.add("ATP is the energy currency of the cell mitochondria")
+        dendrite.reindex()
         synapses = dendrite.get_all_synapses()
         assert len(synapses) >= 1
 
     def test_add_no_synapses_for_unrelated(self, dendrite):
-        """Unrelated notes should not create strong connections."""
+        """Unrelated notes should not create strong connections even after reindex."""
         dendrite.add("Quantum mechanics describes subatomic particle behavior")
         dendrite.add("Ancient Roman gladiators fought in the Colosseum arena")
+        dendrite.reindex()
         synapses = dendrite.get_all_synapses()
         # May have zero or very weak connections
         strong_synapses = [s for s in synapses if s.weight > 0.3]
@@ -175,10 +177,11 @@ class TestStats:
 
 class TestConsolidation:
     def test_run_consolidation_integration(self, dendrite):
-        """Full workflow: add notes, ask (creates traversals), consolidate."""
+        """Full workflow: add notes, reindex, ask (creates traversals), consolidate."""
         dendrite.add("mitochondria produces atp energy cell powerhouse")
         dendrite.add("atp energy currency cell mitochondria oxidative")
         dendrite.add("cellular respiration glucose energy atp production")
+        dendrite.reindex()
 
         # Ask to create traversals
         dendrite.ask("energy atp mitochondria", top_k=2)
@@ -201,6 +204,7 @@ class TestConsolidation:
     def test_run_decay_integration(self, dendrite):
         dendrite.add("cell energy mitochondria atp")
         dendrite.add("mitochondria powerhouse energy production")
+        dendrite.reindex()
 
         synapses_before = {
             (s.source_id, s.target_id): s.weight for s in dendrite.get_all_synapses()

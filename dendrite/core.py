@@ -49,8 +49,9 @@ class Dendrite:
     All state lives in the Storage instance; Dendrite is a thin orchestration layer.
     """
 
-    def __init__(self, db_path: str = ":memory:"):
+    def __init__(self, db_path: str = ":memory:", reindex_interval: int = 10):
         self.storage = Storage(db_path)
+        self.reindex_interval = reindex_interval
 
     def close(self):
         self.storage.close()
@@ -63,9 +64,11 @@ class Dendrite:
         """
         1. Create and store the neuron.
         2. Extract concepts.
-        3. Recompute similarities against all existing neurons.
-        4. Create/update synapses for pairs with similarity > threshold.
-        5. Return the neuron.
+        3. Increment write counter; trigger full reindex every reindex_interval writes.
+        4. Return the neuron.
+
+        TF-IDF similarity is NOT recomputed on every add — use `reindex()` or
+        wait for the automatic background trigger every `reindex_interval` writes.
         """
         now = time.time()
         neuron = Neuron(
@@ -83,36 +86,45 @@ class Dendrite:
 
         self.storage.add_neuron(neuron)
 
-        # Build/update synapses with all existing neurons (excluding self)
-        existing = [n for n in self.storage.get_all_neurons() if n.id != neuron.id]
-        if existing:
-            self._recompute_synapses(neuron, existing)
+        write_count = self.storage.increment_write_count()
+        if write_count % self.reindex_interval == 0:
+            self.reindex()
 
         return neuron
 
-    def _recompute_synapses(self, new_neuron: Neuron, existing: list[Neuron]) -> None:
-        """Compute cosine similarity between new_neuron and each existing neuron."""
-        all_texts = [n.content for n in existing] + [new_neuron.content]
-        all_neurons = existing + [new_neuron]
-        n = len(all_texts)
+    def reindex(self) -> int:
+        """
+        Full TF-IDF reindex: recompute pairwise cosine similarity for all neurons
+        and rebuild the synapse table from scratch.
 
-        if n < 2:
-            return
+        Returns the number of synapses created.
+        """
+        all_neurons = self.storage.get_all_neurons()
+        if len(all_neurons) < 2:
+            return 0
 
-        sim_matrix = build_similarity_matrix(all_texts)
-        new_idx = n - 1
+        texts = [n.content for n in all_neurons]
+        sim_matrix = build_similarity_matrix(texts)
+        n = len(all_neurons)
 
-        for i, existing_neuron in enumerate(existing):
-            sim = sim_matrix[new_idx, i]
-            if sim > SIMILARITY_THRESHOLD:
-                synapse = Synapse(
-                    source_id=new_neuron.id,
-                    target_id=existing_neuron.id,
-                    weight=float(sim),
-                    traversal_count=0,
-                    last_traversed=None,
-                )
-                self.storage.upsert_synapse(synapse)
+        self.storage.delete_all_synapses()
+
+        count = 0
+        for i in range(n):
+            for j in range(i + 1, n):
+                sim = sim_matrix[i, j]
+                if sim > SIMILARITY_THRESHOLD:
+                    synapse = Synapse(
+                        source_id=all_neurons[i].id,
+                        target_id=all_neurons[j].id,
+                        weight=float(sim),
+                        traversal_count=0,
+                        last_traversed=None,
+                    )
+                    self.storage.upsert_synapse(synapse)
+                    count += 1
+
+        return count
 
     # ------------------------------------------------------------------
     # ask

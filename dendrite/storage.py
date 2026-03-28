@@ -60,6 +60,13 @@ CREATE TABLE IF NOT EXISTS synapses (
     last_traversed REAL,
     PRIMARY KEY (source_id, target_id)
 );
+
+CREATE TABLE IF NOT EXISTS metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+INSERT OR IGNORE INTO metadata (key, value) VALUES ('write_count', '0');
 """
 
 
@@ -67,6 +74,8 @@ class Storage:
     def __init__(self, db_path: str = ":memory:"):
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
+        # WAL mode allows concurrent readers + one writer without locking
+        self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.executescript(SCHEMA)
         self.conn.commit()
 
@@ -221,6 +230,30 @@ class Storage:
             traversal_count=row["traversal_count"],
             last_traversed=row["last_traversed"],
         )
+
+    # --- Write counter ---
+
+    def increment_write_count(self) -> int:
+        """Increment and return the persistent write counter."""
+        self.conn.execute(
+            "UPDATE metadata SET value = CAST(value AS INTEGER) + 1 WHERE key = 'write_count'"
+        )
+        self.conn.commit()
+        return int(
+            self.conn.execute(
+                "SELECT value FROM metadata WHERE key = 'write_count'"
+            ).fetchone()[0]
+        )
+
+    def get_write_count(self) -> int:
+        row = self.conn.execute(
+            "SELECT value FROM metadata WHERE key = 'write_count'"
+        ).fetchone()
+        return int(row[0]) if row else 0
+
+    def delete_all_synapses(self) -> None:
+        self.conn.execute("DELETE FROM synapses")
+        self.conn.commit()
 
     # --- Stats helpers ---
 

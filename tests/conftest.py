@@ -43,5 +43,7 @@ def populated_dendrite():
         "Glucose is broken down during cellular respiration to release energy",
         title="Glucose Metabolism",
     )
+    # Explicit reindex to build synapses after batch loading
+    d.reindex()
     yield d
     d.close()

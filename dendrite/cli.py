@@ -345,6 +345,26 @@ def stats(ctx: click.Context, as_json: bool) -> None:
 
 
 # ---------------------------------------------------------------------------
+# dendrite reindex
+# ---------------------------------------------------------------------------
+
+@cli.command()
+@click.option("--json", "as_json", is_flag=True, default=False, help="Output as JSON")
+@click.pass_context
+def reindex(ctx: click.Context, as_json: bool) -> None:
+    """Recompute all TF-IDF similarities and rebuild synaptic connections."""
+    d = get_dendrite(ctx)
+    try:
+        n_synapses = d.reindex()
+        if as_json:
+            print(json.dumps({"synapses_created": n_synapses}))
+        else:
+            console.print(f"[green]Reindex complete.[/green] {n_synapses} synapses created.")
+    finally:
+        d.close()
+
+
+# ---------------------------------------------------------------------------
 # dendrite consolidate
 # ---------------------------------------------------------------------------
 
