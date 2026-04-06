@@ -1,6 +1,14 @@
 # Dendrite
 
-Neural-inspired knowledge synthesis CLI. Each note is a **neuron**; shared concepts create **synaptic connections** scored by TF-IDF cosine similarity. Querying activates neurons and spreads through high-strength connections. Consolidation strengthens frequently traversed paths; decay weakens unused links over time.
+Neural-inspired knowledge synthesis engine. Each note is a **neuron**; shared concepts create **synaptic connections** scored by TF-IDF cosine similarity. Querying activates neurons and spreads through high-strength connections. Consolidation strengthens frequently traversed paths; decay weakens unused links over time.
+
+Dendrite works standalone as a CLI/API, and as a **knowledge layer for Claude Code** — giving Claude persistent, self-organizing memory that grows stronger with use.
+
+## Documentation
+
+- **[Claude Code Integration Guide](./CLAUDE_CODE_GUIDE.md)** — Setup instructions and practical patterns for using Dendrite with Claude Code (MCP server, hooks, skills)
+- **[Architecture & Technical Reference](./DENDRITE_CLAUDE_CODE_INTEGRATION.md)** — Deep dive on how Dendrite works, integration architecture, and comparison with built-in memory
+- **[Demo Notes](./DEMO_NOTES.md)** — Presenter notes and demo walkthrough script
 
 ## Install
 
