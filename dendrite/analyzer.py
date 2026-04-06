@@ -107,7 +107,7 @@ class TFIDFVectorizer:
 
 
 def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
-    """Return cosine similarity in [0, 1].  Returns 0 for zero vectors."""
+    """Return cosine similarity in [-1, 1].  Returns 0 for zero vectors."""
     norm1 = np.linalg.norm(v1)
     norm2 = np.linalg.norm(v2)
     if norm1 == 0.0 or norm2 == 0.0:

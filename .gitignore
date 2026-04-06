@@ -1,0 +1,13 @@
+.runtime/
+.claude/*
+!.claude/skills/
+.logs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+state.json
+CLAUDE.md
+CLAUDE.local.md
+*.egg-info/
+dendrite.egg-info/

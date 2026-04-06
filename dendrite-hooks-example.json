@@ -1,0 +1,42 @@
+{
+  "mcpServers": {
+    "dendrite": {
+      "type": "stdio",
+      "command": "python3",
+      "args": ["dendrite_mcp_server.py"],
+      "environmentVariables": {
+        "DENDRITE_DB": "${CLAUDE_PROJECT_DIR}/.dendrite.db"
+      },
+      "alwaysAllow": [
+        "dendrite_ask",
+        "dendrite_explore",
+        "dendrite_stats",
+        "dendrite_list",
+        "dendrite_show"
+      ]
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dendrite ask \"$(basename $PWD)\" --json --top 3 2>/dev/null | python3 -c \"import sys,json; data=json.load(sys.stdin); [print(f'[dendrite] {r[\\\"title\\\"]}: {r[\\\"content\\\"][:80]}...') for r in data[:3]]\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dendrite consolidate --json 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

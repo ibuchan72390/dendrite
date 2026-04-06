@@ -292,6 +292,7 @@ def graph(ctx: click.Context, max_nodes: int, as_json: bool) -> None:
                 degree[s.source_id] = degree.get(s.source_id, 0) + 1
                 degree[s.target_id] = degree.get(s.target_id, 0) + 1
 
+            neurons_by_id = {n.id: n for n in neurons}
             print(json.dumps({
                 "neurons": [
                     {"id": n.id, "title": n.display_title(), "degree": degree.get(n.id, 0)}
@@ -301,8 +302,8 @@ def graph(ctx: click.Context, max_nodes: int, as_json: bool) -> None:
                     {
                         "source_id": s.source_id,
                         "target_id": s.target_id,
-                        "source_title": next((n.display_title() for n in neurons if n.id == s.source_id), s.source_id),
-                        "target_title": next((n.display_title() for n in neurons if n.id == s.target_id), s.target_id),
+                        "source_title": neurons_by_id[s.source_id].display_title() if s.source_id in neurons_by_id else s.source_id,
+                        "target_title": neurons_by_id[s.target_id].display_title() if s.target_id in neurons_by_id else s.target_id,
                         "weight": round(s.weight, 4),
                     }
                     for s in synapses
